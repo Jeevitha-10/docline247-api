@@ -1,0 +1,8 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--rcfile=.pylintrc",
+        "--django-settings-module=docline247api.settings"
+    ]
+}
