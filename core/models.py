@@ -1,18 +1,13 @@
 from datetime import datetime
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from .managers import CategoryManager, DoctorManager
 
 
 class User(AbstractUser):
 
     class Meta:
         db_table = 'dl_users'
-
-
-class CategoryManager(models.Manager):
-
-    def get_by_natural_key(self, name):
-        return self.get(name=name)
 
 
 class Category(models.Model):
@@ -26,12 +21,6 @@ class Category(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-
-class DoctorManager(models.Manager):
-
-    def get_by_natural_key(self, name):
-        return self.get(name=name)
 
 
 class Doctor(models.Model):
