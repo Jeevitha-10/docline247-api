@@ -1,7 +1,11 @@
 from datetime import datetime
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from .managers import CategoryManager, DoctorManager
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+from django.db.models.signals import pre_save
+from .managers import CategoryManager, DoctorManager, PatientManager
+from .utils import unique_slug_generator
 
 
 class User(AbstractUser):
@@ -48,3 +52,56 @@ class Doctor(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Patient(models.Model):
+    name = models.CharField(max_length=128)
+    email = models.EmailField()
+    dob = models.DateField()
+
+    objects = PatientManager()
+
+    class Meta:
+        db_table = 'dl_patients'
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class Appointment(models.Model):
+
+    class StatusChoices(models.TextChoices):
+        IN_PROGRESS = 'IN PROGRESS', _('In Progress')
+        ACCEPTED = 'ACCEPTED', _('Accepted')
+        REJECTED = 'REJECTED', _('Rejected')
+        CANCELED = 'CANCELED', _('Canceled')
+
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
+    date_of_appointment = models.DateField()
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE)
+    time_slot = models.TimeField()
+    message = models.TextField()
+    slug = models.SlugField(max_length=250, null=True, blank=True)
+    status = models.CharField(max_length=11,
+                              choices=StatusChoices.choices, default=StatusChoices.IN_PROGRESS)
+
+    class Meta:
+        db_table = 'dl_appointments'
+
+    def save(self, *args, **kwargs):
+        if self.doctor.category != self.category:
+            raise ValidationError("Doctor and Category do not match")
+        super(Appointment, self).save(*args, **kwargs)
+        # endif
+
+    def __str__(self) -> str:
+        return str(self.patient)
+
+
+def pre_save_receiver(sender, instance, *args, **kwargs):
+    if not instance.slug:
+        instance.slug = unique_slug_generator(instance)
+
+
+pre_save.connect(pre_save_receiver, sender=Appointment)

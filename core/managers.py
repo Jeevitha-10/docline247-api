@@ -11,3 +11,9 @@ class DoctorManager(models.Manager):
 
     def get_by_natural_key(self, name):
         return self.get(name=name)
+
+
+class PatientManager(models.Manager):
+
+    def get_by_natural_key(self, name):
+        return self.get(name=name)
